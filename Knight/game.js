@@ -35,7 +35,13 @@ function handleComplete() {
             ],
             
             "animations": {
-                "newRun": { "frames": [1, 0, 4, 7, 2, 3, 5, 6] }
+                "newRun": { 
+					"frames": [1, 0, 4, 7, 2, 3, 5, 6] 
+				},
+				"attack": {
+					"frames": [6, 1, 6, 1, 6, 1, 6, 1],
+					next: "newRun"
+				}
             },
 		});
         knight = new createjs.Sprite(spriteSheet, "newRun");
@@ -43,18 +49,17 @@ function handleComplete() {
 
 	stage.addChild(knight);
 
+	stage.addEventListener("stagemousedown", attack);
+
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", tick);
 }
 
+function attack() {
+	knight.gotoAndPlay("attack");
+}
 
 function tick(event) {
-	var deltaS = event.delta / 1000;
-
-	// var grantW = grant.getBounds().width * grant.scaleX;
-	// grant.x = (position >= w + grantW) ? -grantW : position;
-
-
 	knight.x = 100;
 	knight.y = 200;
 
