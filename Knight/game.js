@@ -2,7 +2,7 @@ var stage, w, h, loader;
 var sky, knight, ground, hill, hill2;
 
 function init() {
-
+	
 	stage = new createjs.StageGL("testCanvas");
 
 	// grab canvas width and height for later calculations:
@@ -15,6 +15,7 @@ function init() {
 
 	loader = new createjs.LoadQueue(false);
 	loader.addEventListener("complete", handleComplete);
+
     loader.loadManifest(manifest, true, "./assets/");
 }
 
@@ -22,7 +23,7 @@ function handleComplete() {
 
 	var spriteSheet = new createjs.SpriteSheet({
 			images: [loader.getResult("knight")],
-            framerate: 20,
+            framerate: 15,
 			frames: [
 				[1, 1, 63, 67, 0, -15, -10],
 				[1, 70, 56, 46, 0, -7, -19],
@@ -53,19 +54,34 @@ function handleComplete() {
 
 	stage.addChild(knight);
 
-	stage.addEventListener("stagemousedown", attack);
+	// stage.addEventListener("stagemousedown", attack);
+	window.addEventListener("keydown", movement);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", tick);
 }
 
+function tick(event) {
+	// knight.x = 100;
+	// knight.y = 200;
+
+	stage.update(event);
+}
+
+function movement(event) {
+	let newX = knight.x + 10
+	console.log(event)
+	if (event.key === "ArrowRight"){
+		createjs.Tween.get(knight, {override: true}).to({ x: newX}, 100)
+
+        createjs.Ticker.addEventListener("tick", stage);
+	}
+	else if (event.code === "Space"){
+		attack()
+	}
+};
+
 function attack() {
 	knight.gotoAndPlay("attack");
 }
 
-function tick(event) {
-	knight.x = 100;
-	knight.y = 200;
-
-	stage.update(event);
-}
