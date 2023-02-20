@@ -1,5 +1,7 @@
 var stage, w, h, loader;
 var sky, knight, ground, hill, hill2;
+var pressedSpace = 0
+var pressedRight = 0;
 
 function init() {
 	
@@ -54,7 +56,7 @@ function handleComplete() {
 			},
 		});
         knight = new createjs.Sprite(spriteSheet, "idle");
-        knight.y = 35;
+        knight.y = 400;
 
 	stage.addChild(knight);
 
@@ -63,18 +65,11 @@ function handleComplete() {
 }
 
 function tick(event) {
-	// knight.x = 100;
-	// knight.y = 200;
-
 	stage.update(event);
 	run()
 	attack()
 	idle()
 }
-
-var pressedSpace = 0
-var pressedRight = 0;
-
 
 function keyPressed(e) {
 	cxc = e.keyCode;
