@@ -10,7 +10,7 @@ function init() {
 	h = stage.canvas.height;
 
 	manifest = [
-        {src: "run.png", id: "knight"},
+        {src: "runandattack.png", id: "knight"},
 	];
 
 	loader = new createjs.LoadQueue(false);
@@ -21,30 +21,34 @@ function init() {
 function handleComplete() {
 
 	var spriteSheet = new createjs.SpriteSheet({
-			"images": [loader.getResult("knight")],
-            "framerate": 20,
-            "frames": [
-                [1, 1, 36, 51, 0, -25, -16],
-                [39, 1, 34, 51, 0, -27, -17],
-                [75, 1, 34, 51, 0, -27, -16],
-                [111, 1, 34, 51, 0, -27, -15],
-                [147, 1, 32, 51, 0, -29, -18],
-                [181, 1, 31, 51, 0, -31, -18],
-                [214, 1, 31, 51, 0, -30, -17],
-                [247, 1, 30, 51, 0, -31, -17]
-            ],
+			images: [loader.getResult("knight")],
+            framerate: 20,
+			frames: [
+				[1, 1, 63, 67, 0, -15, -10],
+				[1, 70, 56, 46, 0, -7, -19],
+				[59, 70, 37, 46, 0, -32, -19],
+				[66, 1, 56, 65, 0, -32, 0],
+				[98, 68, 56, 47, 0, -7, -18],
+				[124, 1, 37, 62, 0, -30, -3],
+				[156, 65, 36, 51, 0, -25, -16],
+				[163, 1, 34, 51, 0, -27, -17],
+				[194, 54, 34, 51, 0, -27, -16],
+				[199, 1, 34, 51, 0, -27, -15],
+				[230, 54, 32, 51, 0, -29, -18],
+				[235, 1, 31, 51, 0, -31, -18],
+				[264, 54, 31, 51, 0, -30, -17],
+				[268, 1, 30, 51, 0, -31, -17],
+				[300, 1, 37, 50, 0, -30, -15],
+				[300, 53, 37, 50, 0, -30, -15]
+			],
             
-            "animations": {
-                "newRun": { 
-					"frames": [1, 0, 4, 7, 2, 3, 5, 6] 
-				},
-				"attack": {
-					"frames": [6, 1, 6, 1, 6, 1, 6, 1],
-					next: "newRun"
+            animations: {
+                run: { "frames": [7, 6, 10, 13, 8, 9, 11, 12] },
+				attack: {"frames": [2, 3, 5, 14, 15, 0, 1, 4] , next: "run"
 				}
             },
 		});
-        knight = new createjs.Sprite(spriteSheet, "newRun");
+        knight = new createjs.Sprite(spriteSheet, "run");
         knight.y = 35;
 
 	stage.addChild(knight);
