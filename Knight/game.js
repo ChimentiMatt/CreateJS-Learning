@@ -1,7 +1,9 @@
 var stage, w, h, loader;
 var sky, knight, ground, hill, hill2;
-var pressedSpace = 0
+var pressedSpace = 0;
 var pressedRight = 0;
+var pressedLeft = 0;
+var facing = "right";
 
 function init() {
 	
@@ -27,36 +29,43 @@ function handleComplete() {
 			images: [loader.getResult("knight")],
             framerate: 5,
 			frames: [
-				[0, 0, 30, 51, 0, -31, -17],
-				[30, 0, 31, 51, 0, -31, -18],
-				[61, 0, 31, 51, 0, -30, -17],
-				[92, 0, 32, 51, 0, -29, -18],
-				[0, 51, 37, 46, 0, -32, -19],
-				[37, 51, 34, 51, 0, -27, -17],
-				[71, 51, 34, 51, 0, -27, -16],
-				[0, 102, 34, 51, 0, -27, -15],
-				[34, 102, 36, 51, 0, -25, -16],
-				[70, 102, 37, 50, 0, -30, -15],
-				[0, 153, 37, 50, 0, -30, -15],
-				[37, 153, 37, 50, 0, -20, -15],
-				[74, 153, 37, 50, 0, -21, -15],
-				[0, 203, 37, 50, 0, -23, -15],
-				[37, 203, 37, 51, 0, -22, -14],
-				[74, 203, 37, 62, 0, -30, -3],
-				[0, 265, 56, 46, 0, -7, -19],
-				[56, 265, 56, 47, 0, -7, -18],
-				[0, 312, 56, 65, 0, -32, 0],
-				[56, 312, 63, 67, 0, -15, -10]
+				 // x, y, width, height, imageIndex*, regX*, regY*
+				[0, 0, 96, 80, 0, 0, 0],
+				[96, 0, 96, 80, 0, 0, 0],
+				[192, 0, 96, 80, 0, 0, 0],
+				[288, 0, 96, 80, 0, 0, 0],
+				[384, 0, 96, 80, 0, 0, 0],
+				[480, 0, 96, 80, 0, 0, 0],
+				[576, 0, 96, 80, 0, 0, 0],
+				[672, 0, 96, 80, 0, 0, 0],
+				// idle
+				[768, 0, 63, 80, 0, 0, 0],
+				[865, 0, 63, 80, 0, 0, 0],
+				[962, 0, 63, 80, 0, 0, 0],
+				[1059, 0, 63, 80, 0, 0, 0],
+				//
+				[1152, 0, 80, 80, 0, 0, 0],
+				[1248, 0, 80, 80, 0, 0, 0],
+				[1344, 0, 80, 80, 0, 0, 0],
+				[1440, 0, 80, 80, 0, 0, 0],
+				[1536, 0, 80, 80, 0, 0, 0],
+				[1632, 0, 80, 80, 0, 0, 0],
+				[1728, 0, 80, 80, 0, 0, 0],
+				[1824, 0, 80, 80, 0, 0, 0]
 			],
         
 			animations: {
-				"run": { "frames": [5, 8, 3, 0, 6, 7, 1, 2]},
-				"attack": { "frames": [4, 18, 15, 9, 10, 19, 16, 17] , next: "idle"},
-				"idle": { "frames": [11, 12] }
+				"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
+				"idle": { "frames":[8, 9, 10, 11]  },
+				"run": { "frames": [12, 13, 14, 15, 16, 17, 18, 19] }
 			},
-		});
-        knight = new createjs.Sprite(spriteSheet, "idle");
-        knight.y = 400;
+	});
+	knight = new createjs.Sprite(spriteSheet, "idle");
+	knight.y = 400;
+	knight.x = 250
+
+
+
 
 	stage.addChild(knight);
 
@@ -66,16 +75,30 @@ function handleComplete() {
 
 function tick(event) {
 	stage.update(event);
-	run()
+
 	attack()
 	idle()
+	run()
 }
 
 function keyPressed(e) {
 	cxc = e.keyCode;
-	console.log(cxc)
-	if (cxc === 39){
+
+	if (cxc === 39 && knight.currentAnimation !== "attack"){
+		if (facing === "left") {
+			knight.x -= 100
+		}
+		facing = "right";	
 		pressedRight = 1;
+		knight.skewY = 0;
+	}
+	else if (cxc === 37 && knight.currentAnimation !== "attack"){
+		if (facing === "right") {
+			knight.x += 100
+		}
+		facing = "left";	
+		pressedLeft = 1
+		knight.skewY = 180;
 	}
 	else if (cxc === 32){
 		pressedSpace = 1
@@ -84,16 +107,26 @@ function keyPressed(e) {
 
 function keyUp(e){
 	cxc = e.keyCode;
+	// Right Arrow
 	if (cxc === 39){
 		pressedRight = 0;
 	}
+	// Left Arrow
+	else if (cxc === 37){
+		pressedLeft = 0;
+	}
+	// Space bar
 	else if (cxc === 32){
 		pressedSpace = 0
 	}
 }
 
+
+
 function run() {
 	if (pressedRight === 1){
+		pressedLeft = 0;
+
 		// stops repeating of animation on continues run
 		if (knight.currentAnimation !== "run"){
 			knight.gotoAndPlay("run");
@@ -103,18 +136,33 @@ function run() {
         createjs.Ticker.addEventListener("tick", stage);
 	}
 
-}
+	else if (pressedLeft === 1){
+		pressedRight = 0;
+		// stops repeating of animation on continues run
+		if (knight.currentAnimation !== "run"){
+			knight.gotoAndPlay("run");
+		}
+
+		createjs.Tween.get(knight, {override: true}).to({ x: knight.x - 10}, 100)
+
+		createjs.Ticker.addEventListener("tick", stage);
+	}
+};
 
 function attack() {
 	if (pressedSpace === 1){
-		if (knight.currentAnimation !== "Space"){
+		if (knight.currentAnimation !== "attack"){
 			knight.gotoAndPlay("attack");
 		}
+
 	}
 };
 
 function idle() {
-	if (knight.currentAnimation === "run" && pressedRight === 0){
-		knight.gotoAndPlay("idle");
+	if (knight.currentAnimation === "run"){
+		if (pressedRight === 0 && pressedLeft === 0){
+
+			knight.gotoAndPlay("idle");
+		}
 	}
 }
