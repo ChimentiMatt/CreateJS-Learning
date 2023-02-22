@@ -110,26 +110,32 @@ function handleComplete() {
 			"slime": { "frames": [1, 2, 3, 0] }
 		},
 	})
-	slime = new createjs.Sprite(slimeSpriteSheet, "slime");
-	slime.y = 430;
-	slime.x = 350
-	slime.scaleY = 2
-	slime.scaleX = 2
-	enemies.push(slime)
+
+
+	for (let i = 0; i < 2; i++){
+		slime = new createjs.Sprite(slimeSpriteSheet, "slime");
+		slime.y = 430;
+		slime.x = Math.floor(Math.random() * ( 600 - 200)) + 200;
+		slime.scaleY = 2
+		slime.scaleX = 2
+		enemies.push(slime)
+	}
+
 
 	for (let i = 0; i < enemies.length; i++){
 		stage.addChild(enemies[i]);
 	}
+	console.log(enemies)
 
 	stage.addChild(knight);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", tick);
+	slimeMovement()
 }
 
 function tick(event) {
 	stage.update(event);
-
 
 	attack()
 	idle()
@@ -255,18 +261,28 @@ function checkCollision() {
 			if (knight.x >= enemies[i].x - knightWidth && knight.x <= enemies[i].x){
 				incrementScore()
 				stage.removeChild(enemies[i])
-				enemies.pop(i, 1)
+				enemies.splice(i, 1)
+				console.log(enemies)
 			}
 		}
 		else if (facing === "left"){
 			if (knight.x - leftOffset >= enemies[i].x - knightWidth && knight.x - leftOffset <= enemies[i].x){
 				incrementScore()
 				stage.removeChild(enemies[i])
-				enemies.pop(i, 1)
+				enemies.splice(i, 1)
 			}
 		}
 	}
 		
+}
+
+function slimeMovement() {
+	for (let i = 0; i < enemies.length; i++){
+		let movementRange = Math.floor(Math.random() * (200 + 100) - 100)
+
+		createjs.Tween.get(enemies[i], {override: true, loop: true}).to({ x: enemies[i].x + movementRange}, 1000)
+		.to({ x: enemies[i].x }, 1000)
+	}
 }
 
 
