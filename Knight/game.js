@@ -1,8 +1,10 @@
 var stage, w, h, loader;
-var sky, knight, ground, hill, hill2;
+var sky, knight, slime;
 var pressedSpace = 0;
 var pressedRight = 0;
 var pressedLeft = 0;
+var leftOffset = 100;
+var knightWidth = 80;
 var facing = "right";
 
 function init() {
@@ -15,6 +17,7 @@ function init() {
 
 	manifest = [
         {src: "sprite.png", id: "knight"},
+		{src: "slime.png", id: "slime"}
 	];
 
 	loader = new createjs.LoadQueue(false);
@@ -29,7 +32,9 @@ function handleComplete() {
 			images: [loader.getResult("knight")],
             framerate: 5,
 			frames: [
-				 // x, y, width, height, imageIndex*, regX*, regY*
+				// x, y, width, height, imageIndex*, regX*, regY*
+				
+				// attack
 				[0, 0, 96, 80, 0, 0, 0],
 				[96, 0, 96, 80, 0, 0, 0],
 				[192, 0, 96, 80, 0, 0, 0],
@@ -43,7 +48,7 @@ function handleComplete() {
 				[865, 0, 63, 80, 0, 0, 0],
 				[962, 0, 63, 80, 0, 0, 0],
 				[1059, 0, 63, 80, 0, 0, 0],
-				//
+				// run
 				[1152, 0, 80, 80, 0, 0, 0],
 				[1248, 0, 80, 80, 0, 0, 0],
 				[1344, 0, 80, 80, 0, 0, 0],
@@ -55,6 +60,7 @@ function handleComplete() {
 			],
         
 			animations: {
+				// , next: "idle"
 				"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
 				"idle": { "frames":[8, 9, 10, 11]  },
 				"run": { "frames": [12, 13, 14, 15, 16, 17, 18, 19] }
@@ -65,9 +71,28 @@ function handleComplete() {
 	knight.x = 250
 
 
+	var slimeSpriteSheet = new createjs.SpriteSheet({
+		images: [loader.getResult("slime")],
+		framerate: 5,
+		frames: [
+			[1, 1, 16, 12, 0, 0, -4],
+			[1, 15, 16, 11, 0, 0, -5],
+			[19, 1, 16, 11, 0, 0, -5],
+			[19, 14, 14, 12, 0, -1, -4]
+		],
+		animations: {
+			"slime": { "frames": [1, 2, 3, 0] }
+		},
+	})
+	slime = new createjs.Sprite(slimeSpriteSheet, "slime");
+	slime.y = 430;
+	slime.x = 350
+	slime.scaleY = 2
+	slime.scaleX = 2
+	console.log(slime)
 
 
-	stage.addChild(knight);
+	stage.addChild(knight, slime);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", tick);
@@ -79,6 +104,7 @@ function tick(event) {
 	attack()
 	idle()
 	run()
+
 }
 
 function keyPressed(e) {
@@ -86,19 +112,21 @@ function keyPressed(e) {
 
 	if (cxc === 39 && knight.currentAnimation !== "attack"){
 		if (facing === "left") {
-			knight.x -= 100
+			knight.x -= knightWidth
 		}
 		facing = "right";	
 		pressedRight = 1;
-		knight.skewY = 0;
+		// knight.skewY = 0;
+		knight.scaleX = 1
 	}
 	else if (cxc === 37 && knight.currentAnimation !== "attack"){
 		if (facing === "right") {
-			knight.x += 100
+			knight.x += knightWidth
 		}
 		facing = "left";	
 		pressedLeft = 1
-		knight.skewY = 180;
+		// knight.skewY = 180;
+		knight.scaleX = -1
 	}
 	else if (cxc === 32){
 		pressedSpace = 1
@@ -151,8 +179,10 @@ function run() {
 
 function attack() {
 	if (pressedSpace === 1){
+		pressedSpace = 0
 		if (knight.currentAnimation !== "attack"){
 			knight.gotoAndPlay("attack");
+			checkCollision()
 		}
 
 	}
@@ -165,4 +195,18 @@ function idle() {
 			knight.gotoAndPlay("idle");
 		}
 	}
+}
+
+function checkCollision() {
+	if (facing === "right"){
+		if (knight.x >= slime.x - knightWidth && knight.x <= slime.x){
+			console.log('hit')
+		}
+	}
+	else if (facing === "left"){
+		if (knight.x - leftOffset >= slime.x - knightWidth && knight.x - leftOffset <= slime.x){
+			console.log('hit')
+		}
+	}
+
 }
