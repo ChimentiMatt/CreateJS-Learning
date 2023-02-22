@@ -3,6 +3,7 @@ var sky, knight, slime;
 var pressedSpace = 0;
 var pressedRight = 0;
 var pressedLeft = 0;
+var pressedUp = 0;
 var leftOffset = 100;
 var knightWidth = 80;
 var facing = "right";
@@ -31,7 +32,7 @@ function handleComplete() {
 
 	var spriteSheet = new createjs.SpriteSheet({
 			images: [loader.getResult("knight")],
-            framerate: 5,
+            framerate: 6,
 			// x, y, width, height, imageIndex*, regX*, regY*
 			"frames": [
 				[0, 0, 96, 80, 0, 0, 0],
@@ -83,8 +84,8 @@ function handleComplete() {
 				// , next: "idle"
 				"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
 				"dead": { "frames": [8, 9, 10, 11, 12, 13, 14, 15] },
-				"idle": { "frames": [16, 17, 18, 19]  },
-				"jump": { "frames": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] },
+				"idle": { "frames": [16, 17, 18, 19] },
+				"jump": { "frames": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], next: "idle" },
 				"run": { "frames": [31, 32, 33, 34, 35, 36, 37, 38]  }
 			},
 	});
@@ -126,30 +127,36 @@ function tick(event) {
 	attack()
 	idle()
 	run()
+	jump()
 
 }
 
 function keyPressed(e) {
 	cxc = e.keyCode;
 
+	// Right Arrow
 	if (cxc === 39 && knight.currentAnimation !== "attack"){
 		if (facing === "left") {
 			knight.x -= knightWidth
 		}
 		facing = "right";	
 		pressedRight = 1;
-		// knight.skewY = 0;
 		knight.scaleX = 1
 	}
+	// Left Arrow
 	else if (cxc === 37 && knight.currentAnimation !== "attack"){
 		if (facing === "right") {
 			knight.x += knightWidth
 		}
 		facing = "left";	
 		pressedLeft = 1
-		// knight.skewY = 180;
 		knight.scaleX = -1
 	}
+	// Up Arrow || Jump
+	else if (cxc === 38){
+		pressedUp = 1
+	}
+	// Space bar || attack
 	else if (cxc === 32){
 		pressedSpace = 1
 	}
@@ -157,6 +164,8 @@ function keyPressed(e) {
 
 function keyUp(e){
 	cxc = e.keyCode;
+	// console.log(cxc)
+
 	// Right Arrow
 	if (cxc === 39){
 		pressedRight = 0;
@@ -164,6 +173,9 @@ function keyUp(e){
 	// Left Arrow
 	else if (cxc === 37){
 		pressedLeft = 0;
+	}
+	else if (cxc === 38){
+		pressedUp = 0
 	}
 	// Space bar
 	else if (cxc === 32){
@@ -178,10 +190,11 @@ function run() {
 		pressedLeft = 0;
 
 		// stops repeating of animation on continues run
-		if (knight.currentAnimation !== "run"){
+		if (knight.currentAnimation !== "run" && knight.currentAnimation !== "jump"){
 			knight.gotoAndPlay("run");
 		}
-		createjs.Tween.get(knight, {override: true}).to({ x: knight.x + 10}, 100)
+		// createjs.Tween.get(knight, {override: true}).to({ x: knight.x + 10}, 100)
+		knight.x += 5
 
         createjs.Ticker.addEventListener("tick", stage);
 	}
@@ -189,15 +202,26 @@ function run() {
 	else if (pressedLeft === 1){
 		pressedRight = 0;
 		// stops repeating of animation on continues run
-		if (knight.currentAnimation !== "run"){
+		if (knight.currentAnimation !== "run" && knight.currentAnimation !== "jump"){
 			knight.gotoAndPlay("run");
 		}
 
-		createjs.Tween.get(knight, {override: true}).to({ x: knight.x - 10}, 100)
+		// createjs.Tween.get(knight, {override: true}).to({ x: knight.x - 10}, 100)
+		knight.x -= 5
 
 		createjs.Ticker.addEventListener("tick", stage);
 	}
 };
+
+function jump() {
+	if (pressedUp === 1 && knight.currentAnimation !== "jump") {
+		pressedUp = 0;
+		knight.gotoAndPlay("jump");
+
+		createjs.Tween.get(knight, {override: true}).to({y: knight.y - 100}, 500, createjs.Ease.getPowInOut(2))
+		.to({y: knight.y }, 500, createjs.Ease.getPowInOut(5))
+	}
+}
 
 function attack() {
 	if (pressedSpace === 1){
