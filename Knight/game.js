@@ -1,5 +1,6 @@
 var stage, w, h, loader;
-var sky, knight, slime;
+var knight, slime, scoreText;
+var score = 0;
 var pressedSpace = 0;
 var pressedRight = 0;
 var pressedLeft = 0;
@@ -7,6 +8,7 @@ var pressedUp = 0;
 var leftOffset = 100;
 var knightWidth = 80;
 var facing = "right";
+var enemies = []
 
 function init() {
 	
@@ -25,6 +27,7 @@ function init() {
 	loader.addEventListener("complete", handleComplete);
 
     loader.loadManifest(manifest, true, "./assets/");
+	createScore()
 }
 
 function handleComplete() {
@@ -112,10 +115,13 @@ function handleComplete() {
 	slime.x = 350
 	slime.scaleY = 2
 	slime.scaleX = 2
-	console.log(slime)
+	enemies.push(slime)
 
+	for (let i = 0; i < enemies.length; i++){
+		stage.addChild(enemies[i]);
+	}
 
-	stage.addChild(knight, slime);
+	stage.addChild(knight);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", tick);
@@ -123,6 +129,7 @@ function handleComplete() {
 
 function tick(event) {
 	stage.update(event);
+
 
 	attack()
 	idle()
@@ -183,8 +190,6 @@ function keyUp(e){
 	}
 }
 
-
-
 function run() {
 	if (pressedRight === 1){
 		pressedLeft = 0;
@@ -194,7 +199,7 @@ function run() {
 			knight.gotoAndPlay("run");
 		}
 		// createjs.Tween.get(knight, {override: true}).to({ x: knight.x + 10}, 100)
-		knight.x += 5
+		knight.x += 5;
 
         createjs.Ticker.addEventListener("tick", stage);
 	}
@@ -224,7 +229,7 @@ function jump() {
 }
 
 function attack() {
-	if (pressedSpace === 1){
+	if (pressedSpace === 1  && knight.currentAnimation !== "jump"){
 		pressedSpace = 0
 		if (knight.currentAnimation !== "attack"){
 			knight.gotoAndPlay("attack");
@@ -244,15 +249,49 @@ function idle() {
 }
 
 function checkCollision() {
-	if (facing === "right"){
-		if (knight.x >= slime.x - knightWidth && knight.x <= slime.x){
-			console.log('hit')
+	for (let i = 0; i < enemies.length; i++){
+		
+		if (facing === "right"){
+			if (knight.x >= enemies[i].x - knightWidth && knight.x <= enemies[i].x){
+				incrementScore()
+				stage.removeChild(enemies[i])
+				enemies.pop(i, 1)
+			}
+		}
+		else if (facing === "left"){
+			if (knight.x - leftOffset >= enemies[i].x - knightWidth && knight.x - leftOffset <= enemies[i].x){
+				incrementScore()
+				stage.removeChild(enemies[i])
+				enemies.pop(i, 1)
+			}
 		}
 	}
-	else if (facing === "left"){
-		if (knight.x - leftOffset >= slime.x - knightWidth && knight.x - leftOffset <= slime.x){
-			console.log('hit')
-		}
-	}
+		
+}
 
+
+function createScore() {
+    scoreText = new createjs.Text(score, "bold 48px Arial", "#FFFFFF");
+    scoreText.textAlign = "center";
+    scoreText.textBaseline = "middle";
+    scoreText.x = 40;
+    scoreText.y = 40;
+    var bounds = scoreText.getBounds();
+    scoreText.cache(-40, -40, bounds.width * 3 + Math.abs(bounds.x), bounds.height + Math.abs(bounds.y));
+
+    scoreTextOutline = scoreText.clone();
+    scoreTextOutline.color = "#000000";
+    scoreTextOutline.outline = 2;
+    bounds = scoreTextOutline.getBounds();
+    scoreTextOutline.cache(-40, -40, bounds.width * 3 + Math.abs(bounds.x), bounds.height + Math.abs(bounds.y));
+
+    stage.addChild(scoreText, scoreTextOutline);
+}
+
+function incrementScore() {
+    score++;
+    scoreText.text = score;
+    scoreTextOutline.text = score;
+    scoreText.updateCache();
+    scoreTextOutline.updateCache();
 }
