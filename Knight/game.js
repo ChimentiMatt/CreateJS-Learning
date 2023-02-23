@@ -1,4 +1,4 @@
-var stage, w, h, loader;
+var stage, canvas, w, h, loader;
 var knight, slime, scoreText;
 var score = 0;
 var pressedSpace = 0;
@@ -10,9 +10,15 @@ var knightWidth = 80;
 var facing = "right";
 var enemies = []
 
+var line = new createjs.Shape();
+var color = 0xFFFFFF;
+var startX = 100;
+var startY = 479;
+
 function init() {
-	
-	stage = new createjs.StageGL("testCanvas");
+	canvas = document.getElementById("testCanvas")
+	stage = new createjs.Stage("testCanvas");
+	// stage.setClearColor("#4ACFF1");
 
 	// grab canvas width and height for later calculations:
 	w = stage.canvas.width;
@@ -31,108 +37,21 @@ function init() {
 }
 
 function handleComplete() {
-	console.log()
-
-	var spriteSheet = new createjs.SpriteSheet({
-			images: [loader.getResult("knight")],
-            framerate: 6,
-			// x, y, width, height, imageIndex*, regX*, regY*
-			"frames": [
-				[0, 0, 96, 80, 0, 0, 0],
-				[96, 0, 96, 80, 0, 0, 0],
-				[192, 0, 96, 80, 0, 0, 0],
-				[288, 0, 96, 80, 0, 0, 0],
-				[384, 0, 96, 80, 0, 0, 0],
-				[480, 0, 96, 80, 0, 0, 0],
-				[576, 0, 96, 80, 0, 0, 0],
-				[672, 0, 96, 80, 0, 0, 0],
-				// dead
-				[768, 0, 80, 54, 0, 0, 0],
-				[864, 0, 80, 54, 0, 0, 0],
-				[960, 0, 80, 54, 0, 0, 0],
-				[1056, 0, 80, 54, 0, 0, 0],
-				// run
-				[1152, 0, 80, 54, 0, 0, 0],
-				[0, 80, 80, 54, 0, 0, 0],
-				[96, 80, 80, 54, 0, 0, 0],
-				[192, 80, 80, 54, 0, 0, 0],
-				// idle
-				[288, 80, 63, 80, 0, 0, 0],
-				[385, 80, 63, 80, 0, 0, 0],
-				[482, 80, 63, 80, 0, 0, 0],
-				[579, 80, 63, 80, 0, 0, 0],
-				// jump
-				[672, 80, 64, 64, 0, 0, 0],
-				[768, 80, 64, 64, 0, 0, 0],
-				[864, 80, 64, 64, 0, 0, 0],
-				[960, 80, 64, 64, 0, 0, 0],
-				[1056, 80, 64, 64, 0, 0, 0],
-				[1152, 80, 64, 64, 0, 0, 0],
-				[0, 160, 64, 64, 0, 0, 0],
-				[96, 160, 64, 64, 0, 0, 0],
-				[192, 160, 64, 64, 0, 0, 0],
-				[288, 160, 64, 64, 0, 0, 0],
-				[384, 160, 64, 64, 0, 0, 0],
-				[480, 160, 80, 80, 0, 0, 0],
-				[576, 160, 80, 80, 0, 0, 0],
-				[672, 160, 80, 80, 0, 0, 0],
-				[768, 160, 80, 80, 0, 0, 0],
-				[864, 160, 80, 80, 0, 0, 0],
-				[960, 160, 80, 80, 0, 0, 0],
-				[1056, 160, 80, 80, 0, 0, 0],
-				[1152, 160, 80, 80, 0, 0, 0]
-			],
-        
-			animations: {
-				// , next: "idle"
-				"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
-				"dead": { "frames": [8, 9, 10, 11, 12, 13, 14, 15] },
-				"idle": { "frames": [16, 17, 18, 19] },
-				"jump": { "frames": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], next: "idle" },
-				"run": { "frames": [31, 32, 33, 34, 35, 36, 37, 38]  }
-			},
-	});
-	knight = new createjs.Sprite(spriteSheet, "idle");
-	knight.y = 400;
-	knight.x = 250
-
-
-	var slimeSpriteSheet = new createjs.SpriteSheet({
-		images: [loader.getResult("slime")],
-		framerate: 5,
-		frames: [
-			[1, 1, 16, 12, 0, 0, -4],
-			[1, 15, 16, 11, 0, 0, -5],
-			[19, 1, 16, 11, 0, 0, -5],
-			[19, 14, 14, 12, 0, -1, -4]
-		],
-		animations: {
-			"slime": { "frames": [1, 2, 3, 0] }
-		},
-	})
-
-
-	for (let i = 0; i < 2; i++){
-		slime = new createjs.Sprite(slimeSpriteSheet, "slime");
-		slime.y = 430;
-		slime.x = Math.floor(Math.random() * ( 600 - 200)) + 200;
-		slime.scaleY = 2
-		slime.scaleX = 2
-		enemies.push(slime)
-	}
-
-
-	for (let i = 0; i < enemies.length; i++){
-		stage.addChild(enemies[i]);
-	}
-	console.log(enemies)
+	makeSprites()
 
 	stage.addChild(knight);
+	stage.addChild(line);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
+	
+	createjs.Ticker.addEventListener("tick", stage);
 	createjs.Ticker.addEventListener("tick", tick);
 	slimeMovement()
+    stage.update();
 }
+
+
+
 
 function tick(event) {
 	stage.update(event);
@@ -141,6 +60,8 @@ function tick(event) {
 	idle()
 	run()
 	jump()
+	gravity()
+	drawPlatforms()
 
 }
 
@@ -239,7 +160,7 @@ function attack() {
 		pressedSpace = 0
 		if (knight.currentAnimation !== "attack"){
 			knight.gotoAndPlay("attack");
-			checkCollision()
+			slimeCheckCollision()
 		}
 
 	}
@@ -254,7 +175,7 @@ function idle() {
 	}
 }
 
-function checkCollision() {
+function slimeCheckCollision() {
 	for (let i = 0; i < enemies.length; i++){
 		
 		if (facing === "right"){
@@ -285,7 +206,6 @@ function slimeMovement() {
 	}
 }
 
-
 function createScore() {
     scoreText = new createjs.Text(score, "bold 48px Arial", "#FFFFFF");
     scoreText.textAlign = "center";
@@ -302,6 +222,8 @@ function createScore() {
     scoreTextOutline.cache(-40, -40, bounds.width * 3 + Math.abs(bounds.x), bounds.height + Math.abs(bounds.y));
 
     stage.addChild(scoreText, scoreTextOutline);
+
+
 }
 
 function incrementScore() {
@@ -310,4 +232,112 @@ function incrementScore() {
     scoreTextOutline.text = score;
     scoreText.updateCache();
     scoreTextOutline.updateCache();
+}
+
+function makeSprites() {
+	var spriteSheet = new createjs.SpriteSheet({
+		images: [loader.getResult("knight")],
+		framerate: 6,
+		// x, y, width, height, imageIndex*, regX*, regY*
+		"frames": [
+			[0, 0, 96, 80, 0, 0, 0],
+			[96, 0, 96, 80, 0, 0, 0],
+			[192, 0, 96, 80, 0, 0, 0],
+			[288, 0, 96, 80, 0, 0, 0],
+			[384, 0, 96, 80, 0, 0, 0],
+			[480, 0, 96, 80, 0, 0, 0],
+			[576, 0, 96, 80, 0, 0, 0],
+			[672, 0, 96, 80, 0, 0, 0],
+			// dead
+			[768, 0, 80, 54, 0, 0, 0],
+			[864, 0, 80, 54, 0, 0, 0],
+			[960, 0, 80, 54, 0, 0, 0],
+			[1056, 0, 80, 54, 0, 0, 0],
+			// run
+			[1152, 0, 80, 54, 0, 0, 0],
+			[0, 80, 80, 54, 0, 0, 0],
+			[96, 80, 80, 54, 0, 0, 0],
+			[192, 80, 80, 54, 0, 0, 0],
+			// idle
+			[288, 80, 63, 80, 0, 0, 0],
+			[385, 80, 63, 80, 0, 0, 0],
+			[482, 80, 63, 80, 0, 0, 0],
+			[579, 80, 63, 80, 0, 0, 0],
+			// jump
+			[672, 80, 64, 64, 0, 0, 0],
+			[768, 80, 64, 64, 0, 0, 0],
+			[864, 80, 64, 64, 0, 0, 0],
+			[960, 80, 64, 64, 0, 0, 0],
+			[1056, 80, 64, 64, 0, 0, 0],
+			[1152, 80, 64, 64, 0, 0, 0],
+			[0, 160, 64, 64, 0, 0, 0],
+			[96, 160, 64, 64, 0, 0, 0],
+			[192, 160, 64, 64, 0, 0, 0],
+			[288, 160, 64, 64, 0, 0, 0],
+			[384, 160, 64, 64, 0, 0, 0],
+			[480, 160, 80, 80, 0, 0, 0],
+			[576, 160, 80, 80, 0, 0, 0],
+			[672, 160, 80, 80, 0, 0, 0],
+			[768, 160, 80, 80, 0, 0, 0],
+			[864, 160, 80, 80, 0, 0, 0],
+			[960, 160, 80, 80, 0, 0, 0],
+			[1056, 160, 80, 80, 0, 0, 0],
+			[1152, 160, 80, 80, 0, 0, 0]
+		],
+	
+		animations: {
+			// , next: "idle"
+			"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
+			"dead": { "frames": [8, 9, 10, 11, 12, 13, 14, 15] },
+			"idle": { "frames": [16, 17, 18, 19] },
+			"jump": { "frames": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], next: "idle" },
+			"run": { "frames": [31, 32, 33, 34, 35, 36, 37, 38]  }
+		},
+	});
+
+	knight = new createjs.Sprite(spriteSheet, "idle");
+	knight.y = 400;
+	knight.x = 250
+
+	var slimeSpriteSheet = new createjs.SpriteSheet({
+		images: [loader.getResult("slime")],
+		framerate: 5,
+		frames: [
+			[1, 1, 16, 12, 0, 0, -4],
+			[1, 15, 16, 11, 0, 0, -5],
+			[19, 1, 16, 11, 0, 0, -5],
+			[19, 14, 14, 12, 0, -1, -4]
+		],
+		animations: {
+			"slime": { "frames": [1, 2, 3, 0] }
+		},
+	})
+
+	for (let i = 0; i < 2; i++){
+		slime = new createjs.Sprite(slimeSpriteSheet, "slime");
+		slime.y = 432;
+		slime.x = Math.floor(Math.random() * ( 600 - 200)) + 200;
+		slime.scaleY = 2
+		slime.scaleX = 2
+		enemies.push(slime)
+	}
+
+	for (let i = 0; i < enemies.length; i++){
+		stage.addChild(enemies[i]);
+	}
+}
+
+function gravity() {
+	// knight.y += 10
+}
+
+function drawPlatforms() {
+
+
+	line.graphics.setStrokeStyle(30);
+	line.graphics.beginStroke(color);
+	line.graphics.moveTo(startX + 800, startY);
+
+	line.graphics.lineTo(startX, startY);
+	line.graphics.endStroke();
 }

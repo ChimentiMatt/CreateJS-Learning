@@ -2,18 +2,43 @@
   <head>
     <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
     <script>      
+      var line = new createjs.Shape();
+      var color = 0xFFFFFF;
+      var startX = 400;
+      var startY = 300;
+
       function init() {
-        var stage = new createjs.Stage("demoCanvas");
+        var canvas = document.getElementById("demoCanvas")
+        var stage = new createjs.Stage(canvas);
+
+        createjs.Ticker.addEventListener("tick", stage);
+        createjs.Ticker.addEventListener("tick", tick);
+
         var circle = new createjs.Shape();
         circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 50);
         circle.x = 100;
         circle.y = 100;
         stage.addChild(circle);
+
+        stage.addChild(line);
+
         stage.update();
       }
+
+      function tick(){
+
+        line.graphics.setStrokeStyle(30);
+        line.graphics.beginStroke(color);
+        line.graphics.moveTo(startX + 200, startY);
+        // startY--;
+        line.graphics.lineTo(startX, startY);
+        line.graphics.endStroke();
+  
+}
+
     </script>
   </head>
   <body onload="init();">
-    <canvas id="demoCanvas" width="500" height="200"></canvas>
+    <canvas id="demoCanvas" width="1000" height="1000" style="border: 1px solid black"></canvas>
   </body>
 </html>
