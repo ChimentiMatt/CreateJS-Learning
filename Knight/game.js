@@ -7,13 +7,17 @@ var pressedLeft = 0;
 var pressedUp = 0;
 var leftOffset = 100;
 var knightWidth = 80;
+var knightHeight = 66;
 var facing = "right";
+var falling = false
 var enemies = []
 
 var line = new createjs.Shape();
 var color = 0xFFFFFF;
-var startX = 100;
-var startY = 479;
+var startX = 200;
+var startY = 465;
+var lineWidth = 500;
+var lineThickness = 1;
 
 function init() {
 	canvas = document.getElementById("testCanvas")
@@ -122,7 +126,7 @@ function run() {
 		pressedLeft = 0;
 
 		// stops repeating of animation on continues run
-		if (knight.currentAnimation !== "run" && knight.currentAnimation !== "jump"){
+		if (knight.currentAnimation !== "run" && knight.currentAnimation !== "jump" && knight.currentAnimation !== "fall" ){
 			knight.gotoAndPlay("run");
 		}
 		// createjs.Tween.get(knight, {override: true}).to({ x: knight.x + 10}, 100)
@@ -134,10 +138,9 @@ function run() {
 	else if (pressedLeft === 1){
 		pressedRight = 0;
 		// stops repeating of animation on continues run
-		if (knight.currentAnimation !== "run" && knight.currentAnimation !== "jump"){
+		if (knight.currentAnimation !== "run" && knight.currentAnimation !== "jump" && knight.currentAnimation !== "fall" ){
 			knight.gotoAndPlay("run");
 		}
-
 		// createjs.Tween.get(knight, {override: true}).to({ x: knight.x - 10}, 100)
 		knight.x -= 5
 
@@ -147,16 +150,34 @@ function run() {
 
 function jump() {
 	if (pressedUp === 1 && knight.currentAnimation !== "jump") {
-		pressedUp = 0;
-		knight.gotoAndPlay("jump");
+		if (knight.currentAnimation !== "fall"){
 
-		createjs.Tween.get(knight, {override: true}).to({y: knight.y - 100}, 500, createjs.Ease.getPowInOut(2))
-		.to({y: knight.y }, 500, createjs.Ease.getPowInOut(5))
+			pressedUp = 0;
+			knight.gotoAndPlay("jump");
+			
+			createjs.Tween.get(knight, {override: true})
+			.to({y: knight.y - 100}, 700, createjs.Ease.getPowInOut(2))
+			.call(fall)
+		
+		}
+	}
+	function fall() {
+		knight.gotoAndPlay("fall");
+		createjs.Tween.get(knight, {override: true})
+		.to({y: knight.y + 100}, 100)
+		.call(idleCheck)
 	}
 }
 
+function idleCheck() {
+	if (!falling){
+		knight.gotoAndPlay("idle");
+	}
+}
+
+
 function attack() {
-	if (pressedSpace === 1  && knight.currentAnimation !== "jump"){
+	if (pressedSpace === 1 && knight.currentAnimation !== "jump"){
 		pressedSpace = 0
 		if (knight.currentAnimation !== "attack"){
 			knight.gotoAndPlay("attack");
@@ -201,7 +222,8 @@ function slimeMovement() {
 	for (let i = 0; i < enemies.length; i++){
 		let movementRange = Math.floor(Math.random() * (200 + 100) - 100)
 
-		createjs.Tween.get(enemies[i], {override: true, loop: true}).to({ x: enemies[i].x + movementRange}, 1000)
+		createjs.Tween.get(enemies[i], {override: true, loop: true})
+		.to({ x: enemies[i].x + movementRange}, 1000)
 		.to({ x: enemies[i].x }, 1000)
 	}
 }
@@ -222,8 +244,6 @@ function createScore() {
     scoreTextOutline.cache(-40, -40, bounds.width * 3 + Math.abs(bounds.x), bounds.height + Math.abs(bounds.y));
 
     stage.addChild(scoreText, scoreTextOutline);
-
-
 }
 
 function incrementScore() {
@@ -290,7 +310,9 @@ function makeSprites() {
 			"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
 			"dead": { "frames": [8, 9, 10, 11, 12, 13, 14, 15] },
 			"idle": { "frames": [16, 17, 18, 19] },
-			"jump": { "frames": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], next: "idle" },
+			"jump": { "frames": [20, 21, 22, 23, 24, 25, 25, 25, 25, 25]},
+			"fall": { "frames": [25]},
+			"land": { "frames": [26, 27, 28, 29, 30], next: "idle" },
 			"run": { "frames": [31, 32, 33, 34, 35, 36, 37, 38]  }
 		},
 	});
@@ -328,15 +350,50 @@ function makeSprites() {
 }
 
 function gravity() {
-	// knight.y += 10
+	if (knight.currentAnimation !== "jump"){
+		edgeCheck()
+	}
+	
+}
+
+function edgeCheck() {
+	console.log( knight.y + knightHeight, startY + lineThickness,)
+	if (facing === "left"){
+		
+		if (knight.x < startX + 30 || knight.y + knightHeight > startY + lineThickness ){
+			falling = true
+			knight.y += 10
+			knight.gotoAndPlay("fall")
+		}
+		else if (knight.x > startX + lineWidth + 30 ){
+			falling = true
+			knight.y += 10
+			knight.gotoAndPlay("fall")
+		}
+
+	}
+
+	if (facing === "right"){
+		
+		if (knight.x < startX - 30  || knight.y + knightHeight > startY + lineThickness ){
+			falling = true
+			knight.y += 10
+			knight.gotoAndPlay("fall")
+		}
+		else if (knight.x > startX + lineWidth - 30){
+			falling = true
+			knight.y += 10
+			knight.gotoAndPlay("fall")
+
+		}
+	}
+
 }
 
 function drawPlatforms() {
-
-
-	line.graphics.setStrokeStyle(30);
+	line.graphics.setStrokeStyle(lineThickness);
 	line.graphics.beginStroke(color);
-	line.graphics.moveTo(startX + 800, startY);
+	line.graphics.moveTo(startX + lineWidth, startY);
 
 	line.graphics.lineTo(startX, startY);
 	line.graphics.endStroke();
