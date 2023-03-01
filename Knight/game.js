@@ -19,6 +19,10 @@ var startY = 465;
 var lineWidth = 500;
 var lineThickness = 1;
 
+var healthBar = new createjs.Shape();
+var invincible = false
+var totalHealth = 500;
+
 function init() {
 	canvas = document.getElementById("testCanvas")
 	stage = new createjs.Stage("testCanvas");
@@ -38,13 +42,13 @@ function init() {
 
     loader.loadManifest(manifest, true, "./assets/");
 	createScore()
+	createHeathBar()
 }
 
 function handleComplete() {
 	makeSprites()
 
-	stage.addChild(knight);
-	stage.addChild(line);
+	stage.addChild(knight, line, healthBar);
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	
@@ -66,6 +70,7 @@ function tick(event) {
 	jump()
 	gravity()
 	drawPlatforms()
+	takeDamageOnCollision()
 
 }
 
@@ -156,7 +161,7 @@ function jump() {
 			knight.gotoAndPlay("jump");
 			
 			createjs.Tween.get(knight, {override: true})
-			.to({y: knight.y - 100}, 700, createjs.Ease.getPowInOut(2))
+			.to({y: knight.y - 100}, 600, createjs.Ease.getPowInOut(2))
 			.call(fall)
 		
 		}
@@ -164,59 +169,117 @@ function jump() {
 	function fall() {
 		knight.gotoAndPlay("fall");
 		createjs.Tween.get(knight, {override: true})
-		.to({y: knight.y + 100}, 100)
+		.to({y: knight.y + 100}, 600, createjs.Ease.getPowIn(2))
 		.call(idleCheck)
 	}
-}
+};
 
 function idleCheck() {
 	if (!falling){
 		knight.gotoAndPlay("idle");
 	}
-}
+};
 
 
 function attack() {
 	if (pressedSpace === 1 && knight.currentAnimation !== "jump"){
 		pressedSpace = 0
-		if (knight.currentAnimation !== "attack"){
+		if (knight.currentAnimation !== "attack" && knight.currentAnimation !== "fall"){
 			knight.gotoAndPlay("attack");
-			slimeCheckCollision()
+			
+			let collisionIndex = weaponHitCheck()
+			if (collisionIndex !== undefined){
+				incrementScore()
+				stage.removeChild(enemies[collisionIndex])
+				enemies.splice(collisionIndex, 1)
+			}
 		}
-
 	}
+};
+
+function takeDamageOnCollision() {
+	let collisionIndex = slimeCheckCollision()
+	// if player should take damage
+	if (collisionIndex !== undefined){
+
+		// if play not invincible and health above 0
+		if (!invincible && totalHealth > 0){
+			totalHealth -= 50;
+			healthBar.graphics.instructions[1].w = totalHealth;
+			invincible = true;
+			setTimeout(removeInvincible, 500);
+			let moved = 0
+			if (facing === "left") {
+				moved = 10
+			}
+			else{
+				moved = -10
+			}
+		
+			createjs.Tween.get(knight, {override: true})
+			.to({ x: knight.x + moved}, 100);
+
+			knight.gotoAndPlay("damaged");
+		};
+		// if (totalHealth <= 0){
+		// 	knight.gotoAndPlay("dead")
+		// }
+
+
+	};
+	function removeInvincible () {
+		invincible = false;
+	};
 };
 
 function idle() {
 	if (knight.currentAnimation === "run"){
 		if (pressedRight === 0 && pressedLeft === 0){
-
 			knight.gotoAndPlay("idle");
 		}
 	}
-}
+};
 
 function slimeCheckCollision() {
 	for (let i = 0; i < enemies.length; i++){
-		
+	
 		if (facing === "right"){
 			if (knight.x >= enemies[i].x - knightWidth && knight.x <= enemies[i].x){
-				incrementScore()
-				stage.removeChild(enemies[i])
-				enemies.splice(i, 1)
-				console.log(enemies)
+				if(knight.y === 400){
+					return i
+				}
 			}
 		}
 		else if (facing === "left"){
 			if (knight.x - leftOffset >= enemies[i].x - knightWidth && knight.x - leftOffset <= enemies[i].x){
-				incrementScore()
-				stage.removeChild(enemies[i])
-				enemies.splice(i, 1)
+				if(knight.y === 400){
+					return i
+				}
 			}
 		}
-	}
-		
-}
+	}	
+};
+
+function weaponHitCheck() {
+	for (let i = 0; i < enemies.length; i++){
+	
+		if (facing === "right"){
+			if (knight.x >= enemies[i].x - 110 && knight.x <= enemies[i].x){
+				if(knight.y === 400){
+					return i
+				}
+			}
+		}
+		else if (facing === "left"){
+			if (knight.x - leftOffset >= enemies[i].x - knightWidth && knight.x - leftOffset <= enemies[i].x + 55){
+				if(knight.y === 400){
+					return i
+				}
+			}
+		}
+	}	
+};
+
 
 function slimeMovement() {
 	for (let i = 0; i < enemies.length; i++){
@@ -224,7 +287,7 @@ function slimeMovement() {
 
 		createjs.Tween.get(enemies[i], {override: true, loop: true})
 		.to({ x: enemies[i].x + movementRange}, 1000)
-		.to({ x: enemies[i].x }, 1000)
+		.to({ x: enemies[i].x }, 1000);
 	}
 }
 
@@ -313,7 +376,8 @@ function makeSprites() {
 			"jump": { "frames": [20, 21, 22, 23, 24, 25, 25, 25, 25, 25]},
 			"fall": { "frames": [25]},
 			"land": { "frames": [26, 27, 28, 29, 30], next: "idle" },
-			"run": { "frames": [31, 32, 33, 34, 35, 36, 37, 38]  }
+			"run": { "frames": [31, 32, 33, 34, 35, 36, 37, 38]  },
+			"damaged": {"frames": [24, 24], next: "idle"}
 		},
 	});
 
@@ -342,22 +406,22 @@ function makeSprites() {
 		slime.scaleY = 2
 		slime.scaleX = 2
 		enemies.push(slime)
-	}
+	};
 
 	for (let i = 0; i < enemies.length; i++){
 		stage.addChild(enemies[i]);
-	}
-}
+	};
+};
 
 function gravity() {
 	if (knight.currentAnimation !== "jump"){
 		edgeCheck()
 	}
 	
-}
+};
 
 function edgeCheck() {
-	console.log( knight.y + knightHeight, startY + lineThickness,)
+	// console.log( knight.y + knightHeight, startY + lineThickness)
 	if (facing === "left"){
 		
 		if (knight.x < startX + 30 || knight.y + knightHeight > startY + lineThickness ){
@@ -370,7 +434,9 @@ function edgeCheck() {
 			knight.y += 10
 			knight.gotoAndPlay("fall")
 		}
-
+		else{
+			falling = false
+		}
 	}
 
 	if (facing === "right"){
@@ -384,11 +450,12 @@ function edgeCheck() {
 			falling = true
 			knight.y += 10
 			knight.gotoAndPlay("fall")
-
+		}
+		else{
+			falling = false
 		}
 	}
-
-}
+};
 
 function drawPlatforms() {
 	line.graphics.setStrokeStyle(lineThickness);
@@ -397,4 +464,11 @@ function drawPlatforms() {
 
 	line.graphics.lineTo(startX, startY);
 	line.graphics.endStroke();
-}
+};
+
+function createHeathBar() {
+	healthBar.graphics.beginFill('red');
+	healthBar.graphics.drawRect(200, 30, totalHealth, 10);
+	healthBar.graphics.endFill();
+};
+  

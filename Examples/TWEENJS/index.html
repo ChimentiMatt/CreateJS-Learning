@@ -9,6 +9,7 @@
         circle.x = 100;
         circle.y = 100;
         stage.addChild(circle);
+        
         createjs.Tween.get(circle, {loop: true})
           .to({x: 400}, 1000, createjs.Ease.getPowInOut(4))
           .to({alpha: 0, y: 75}, 500, createjs.Ease.getPowInOut(2))
