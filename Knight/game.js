@@ -11,15 +11,13 @@ var knightHeight = 66;
 var facing = "right";
 var falling = false
 var enemies = []
-
 var platformsArray = []
 
-// var line = new createjs.Shape();
 var color = 0xFFFFFF;
 var lineThickness = 1;
-
 var healthBar = new createjs.Shape();
-var invincible = false
+var dead = false;
+var invincible = false;
 var totalHealth = 500;
 
 function init() {
@@ -66,14 +64,17 @@ function handleComplete() {
 
 
 function tick(event) {
+	if (!dead){
+		takeDamageOnCollision()
+		attack()
+		idle()
+		run()
+		jump()
+	}
 	stage.update(event);
 
-	attack()
-	idle()
-	run()
-	jump()
 	gravity()
-	takeDamageOnCollision()
+
 
 }
 
@@ -167,20 +168,20 @@ function jump() {
 			.to({y: knight.y - 100}, 600, createjs.Ease.getPowInOut(2))
 			.call(fall)
 		
-		}
-	}
+		};
+	};
 	function fall() {
 		knight.gotoAndPlay("fall");
 		createjs.Tween.get(knight, {override: true})
 		.to({y: knight.y + 100}, 600)
 		.call(idleCheck)
-	}
+	};
 };
 
 function idleCheck() {
 	if (!falling){
 		knight.gotoAndPlay("idle");
-	}
+	};
 };
 
 
@@ -197,7 +198,7 @@ function attack() {
 				enemies.splice(collisionIndex, 1)
 			}
 		}
-	}
+	};
 };
 
 function takeDamageOnCollision() {
@@ -223,10 +224,13 @@ function takeDamageOnCollision() {
 			.to({ x: knight.x + moved}, 100);
 
 			knight.gotoAndPlay("damaged");
-		};
-		// if (totalHealth <= 0){
-		// 	knight.gotoAndPlay("dead")
-		// }
+		}
+		else if (totalHealth <= 0){
+			dead = true;
+			knight.y += 15
+			knight.gotoAndPlay("dying")
+			
+		}
 
 
 	};
@@ -374,7 +378,8 @@ function makeSprites() {
 		animations: {
 			// , next: "idle"
 			"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
-			"dead": { "frames": [8, 9, 10, 11, 12, 13, 14, 15] },
+			"dying": { "frames": [8, 9, 10, 11, 12, 13, 14, 15], next: "dead" },
+			"dead": { "frames": [15] },
 			"idle": { "frames": [16, 17, 18, 19] },
 			"jump": { "frames": [20, 21, 22, 23, 24, 25, 25, 25, 25, 25]},
 			"fall": { "frames": [25]},
@@ -456,7 +461,7 @@ function loopPlatforms() {
 		// knight.y += 3
 		knight.gotoAndPlay("fall")
 		createjs.Tween.get(knight, {override: true})
-		.to({y: knight.y + 10}, 80)
+		.to({y: knight.y + 10}, 65)
 		.call(idleCheck)
 		
 
