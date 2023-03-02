@@ -408,7 +408,7 @@ function makeSprites() {
 		slime.x = Math.floor(Math.random() * ( 600 - 200)) + 200;
 		slime.scaleY = 2
 		slime.scaleX = 2
-		// enemies.push(slime)
+		enemies.push(slime)
 	};
 
 	for (let i = 0; i < enemies.length; i++){
@@ -444,6 +444,7 @@ function loopPlatforms() {
 			continue
 		}
 		if (platformCheck(coordinates) ){
+			
 			falling = false
 			if (edgeCheck(coordinates)){
 				falling = true
@@ -452,9 +453,16 @@ function loopPlatforms() {
 	}
 
 	if (falling){
-		knight.y += 5
+		// knight.y += 3
+		knight.gotoAndPlay("fall")
+		createjs.Tween.get(knight, {override: true})
+		.to({y: knight.y + 10}, 80)
+		.call(idleCheck)
+		
+
 	}
 }
+
 
 // Need rebuilding
 
