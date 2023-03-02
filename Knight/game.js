@@ -47,7 +47,6 @@ function init() {
 
 function handleComplete() {
 	makeSprites()
-	drawPlatforms()
 
 	stage.addChild(knight, healthBar);
 
@@ -74,7 +73,6 @@ function tick(event) {
 	run()
 	jump()
 	gravity()
-	drawPlatforms()
 	takeDamageOnCollision()
 
 }
@@ -419,25 +417,13 @@ function makeSprites() {
 };
 
 function gravity() {
-	if (knight.currentAnimation !== "jump"){
-		edgeCheck()
-	}
-	
+
+	loopPlatforms()
 };
 
-// Need rebuilding
-
-// Loop over all edges. return true only if knight is between the x min and x max and a small amount of height for the platform
-// then, in a different function, if this returned false, have knight fall  
-
-function edgeCheck() {
-	let coordinates = {}
-	
-	// console.log(platformsArray[0].graphics._instructions[2].y)
-	// console.log(platformsArray[1].graphics._instructions[2].y)
-
-	// loop through all platforms to get their locations
-	for (let i = 0; i < platformsArray.length; i++){
+function loopPlatforms() {
+	let i = 0
+	for (i = 0; i < platformsArray.length; i++){
 
 		coordinates = { 
 			lineTo : {x: platformsArray[i].graphics._instructions[2].x, y: platformsArray[i].graphics._instructions[1].y},
@@ -445,68 +431,67 @@ function edgeCheck() {
 			id: i
 		}
 
-		console.log(coordinates.lineTo.y)
-		let lineWidth =  coordinates.moveTo.x  - coordinates.lineTo.x 
-
-		if (facing === "left"){
-			// if beyond left edge or beyond line y
-			if (knight.x < coordinates.lineTo.x + 30 || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
-
-				
-
-				if (knight.y + knightHeight - coordinates.moveTo.y > -10 && knight.y + knightHeight - coordinates.moveTo.y < 10)
-				{
-					console.log("apple", coordinates.id)
-				}
-				else{
-					falling = true
-					knight.y += 5
-					knight.gotoAndPlay("fall")
-				}
-		
-				// createjs.Tween.get(knight, {override: true})
-				// .to({y: knight.y + 100}, 500)
-			
-				
-			}
-			else if (knight.x > coordinates.lineTo.x + lineWidth + 30 ){
+		if (edgeCheck(coordinates)){
+			if (platformCheck(coordinates)){
 				falling = true
-				knight.y += 1
-				knight.gotoAndPlay("fall")
-
-				// createjs.Tween.get(knight, {override: true})
-				// .to({y: knight.y + 100}, 500)
 			}
-			else{
-				falling = false
-			}
+	
 		}
-		
-		if (facing === "right"){
-			if (knight.x < coordinates.lineTo.x  + 30  || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+	}
+
+	for (let j = 0; j < platformsArray.length; j++){
+		if (j ===i) {
+			continue
+		}
+		if (platformCheck(coordinates) ){
+			falling = false
+			if (edgeCheck(coordinates)){
 				falling = true
-				// knight.y += 10
-				knight.gotoAndPlay("fall")
-				createjs.Tween.get(knight, {override: true})
-				.to({y: knight.y + 100}, 500)
-			}
-			else if (knight.x > coordinates.lineTo.x + lineWidth + 30){
-				falling = true
-				// knight.y += 10
-				knight.gotoAndPlay("fall")
-				createjs.Tween.get(knight, {override: true})
-				.to({y: knight.y + 100}, 500)
-			}
-			else{
-				falling = false
 			}
 		}
 	}
-};
 
-function onPlatformCheck() {
-
+	if (falling){
+		knight.y += 5
+	}
 }
+
+// Need rebuilding
+
+// Loop over all edges. return true only if knight is between the x min and x max and a small amount of height for the platform
+// then, in a different function, if this returned false, have knight fall  
+
+function edgeCheck(coordinates) {
+	let checkResults = false
+
+	if (facing === "left"){
+
+		// if beyond left edge or beyond line y
+		if (knight.x < coordinates.lineTo.x + 30 || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+			checkResults = true
+		}
+	}
+	else if (facing === "right"){
+		if (knight.x > coordinates.moveTo.x - 30  || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+			checkResults = true
+		}
+	}
+	// return false if no checks pass
+	return checkResults
+}
+
+function platformCheck(coordinates) {
+	let checkResults = false
+
+	if (knight.y + knightHeight - coordinates.moveTo.y > -10 && knight.y + knightHeight - coordinates.moveTo.y < 10)
+	{
+		checkResults = true
+	}
+
+	// returns false if not near top of platform
+	return 	checkResults
+}
+
 
 function generatePlatforms(){
 	var startX =  200
@@ -535,12 +520,6 @@ function generatePlatforms(){
 	platformsArray.push(line2)
 }
 
-function drawPlatforms() {
-
-	
-
-
-};
 
 function createHeathBar() {
 	healthBar.graphics.beginFill('red');
