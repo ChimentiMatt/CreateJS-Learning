@@ -12,11 +12,10 @@ var facing = "right";
 var falling = false
 var enemies = []
 
-var line = new createjs.Shape();
+var platformsArray = []
+
+// var line = new createjs.Shape();
 var color = 0xFFFFFF;
-var startX = 200;
-var startY = 465;
-var lineWidth = 500;
 var lineThickness = 1;
 
 var healthBar = new createjs.Shape();
@@ -43,12 +42,18 @@ function init() {
     loader.loadManifest(manifest, true, "./assets/");
 	createScore()
 	createHeathBar()
+	generatePlatforms()
 }
 
 function handleComplete() {
 	makeSprites()
+	drawPlatforms()
 
-	stage.addChild(knight, line, healthBar);
+	stage.addChild(knight, healthBar);
+
+	for (let i = 0; i < platformsArray.length; i++){
+		stage.addChild(platformsArray[i])
+	}
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	
@@ -169,7 +174,7 @@ function jump() {
 	function fall() {
 		knight.gotoAndPlay("fall");
 		createjs.Tween.get(knight, {override: true})
-		.to({y: knight.y + 100}, 600, createjs.Ease.getPowIn(2))
+		.to({y: knight.y + 100}, 600)
 		.call(idleCheck)
 	}
 };
@@ -405,7 +410,7 @@ function makeSprites() {
 		slime.x = Math.floor(Math.random() * ( 600 - 200)) + 200;
 		slime.scaleY = 2
 		slime.scaleX = 2
-		enemies.push(slime)
+		// enemies.push(slime)
 	};
 
 	for (let i = 0; i < enemies.length; i++){
@@ -420,50 +425,121 @@ function gravity() {
 	
 };
 
-function edgeCheck() {
-	// console.log( knight.y + knightHeight, startY + lineThickness)
-	if (facing === "left"){
-		
-		if (knight.x < startX + 30 || knight.y + knightHeight > startY + lineThickness ){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else if (knight.x > startX + lineWidth + 30 ){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else{
-			falling = false
-		}
-	}
+// Need rebuilding
 
-	if (facing === "right"){
+// Loop over all edges. return true only if knight is between the x min and x max and a small amount of height for the platform
+// then, in a different function, if this returned false, have knight fall  
+
+function edgeCheck() {
+	let coordinates = {}
+	
+	// console.log(platformsArray[0].graphics._instructions[2].y)
+	// console.log(platformsArray[1].graphics._instructions[2].y)
+
+	// loop through all platforms to get their locations
+	for (let i = 0; i < platformsArray.length; i++){
+
+		coordinates = { 
+			lineTo : {x: platformsArray[i].graphics._instructions[2].x, y: platformsArray[i].graphics._instructions[1].y},
+			moveTo : {x: platformsArray[i].graphics._instructions[1].x, y: platformsArray[i].graphics._instructions[2].y},
+			id: i
+		}
+
+		console.log(coordinates.lineTo.y)
+		let lineWidth =  coordinates.moveTo.x  - coordinates.lineTo.x 
+
+		if (facing === "left"){
+			// if beyond left edge or beyond line y
+			if (knight.x < coordinates.lineTo.x + 30 || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+
+				
+
+				if (knight.y + knightHeight - coordinates.moveTo.y > -10 && knight.y + knightHeight - coordinates.moveTo.y < 10)
+				{
+					console.log("apple", coordinates.id)
+				}
+				else{
+					falling = true
+					knight.y += 5
+					knight.gotoAndPlay("fall")
+				}
 		
-		if (knight.x < startX - 30  || knight.y + knightHeight > startY + lineThickness ){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
+				// createjs.Tween.get(knight, {override: true})
+				// .to({y: knight.y + 100}, 500)
+			
+				
+			}
+			else if (knight.x > coordinates.lineTo.x + lineWidth + 30 ){
+				falling = true
+				knight.y += 1
+				knight.gotoAndPlay("fall")
+
+				// createjs.Tween.get(knight, {override: true})
+				// .to({y: knight.y + 100}, 500)
+			}
+			else{
+				falling = false
+			}
 		}
-		else if (knight.x > startX + lineWidth - 30){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else{
-			falling = false
+		
+		if (facing === "right"){
+			if (knight.x < coordinates.lineTo.x  + 30  || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+				falling = true
+				// knight.y += 10
+				knight.gotoAndPlay("fall")
+				createjs.Tween.get(knight, {override: true})
+				.to({y: knight.y + 100}, 500)
+			}
+			else if (knight.x > coordinates.lineTo.x + lineWidth + 30){
+				falling = true
+				// knight.y += 10
+				knight.gotoAndPlay("fall")
+				createjs.Tween.get(knight, {override: true})
+				.to({y: knight.y + 100}, 500)
+			}
+			else{
+				falling = false
+			}
 		}
 	}
 };
 
-function drawPlatforms() {
+function onPlatformCheck() {
+
+}
+
+function generatePlatforms(){
+	var startX =  200
+	var startY = 465;
+	var lineWidth = 500;
+
+	let line = new createjs.Shape();
+
 	line.graphics.setStrokeStyle(lineThickness);
 	line.graphics.beginStroke(color);
 	line.graphics.moveTo(startX + lineWidth, startY);
 
 	line.graphics.lineTo(startX, startY);
 	line.graphics.endStroke();
+	platformsArray.push(line)
+
+	// hard coded while debugging 
+	let line2 = new createjs.Shape();
+
+	line2.graphics.setStrokeStyle(lineThickness);
+	line2.graphics.beginStroke(color);
+	line2.graphics.moveTo(50 + lineWidth, 800);
+
+	line2.graphics.lineTo(50, 800);
+	line2.graphics.endStroke();
+	platformsArray.push(line2)
+}
+
+function drawPlatforms() {
+
+	
+
+
 };
 
 function createHeathBar() {
