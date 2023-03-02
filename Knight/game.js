@@ -11,16 +11,13 @@ var knightHeight = 66;
 var facing = "right";
 var falling = false
 var enemies = []
+var platformsArray = []
 
-var line = new createjs.Shape();
 var color = 0xFFFFFF;
-var startX = 200;
-var startY = 465;
-var lineWidth = 500;
 var lineThickness = 1;
-
 var healthBar = new createjs.Shape();
-var invincible = false
+var dead = false;
+var invincible = false;
 var totalHealth = 500;
 
 function init() {
@@ -43,12 +40,17 @@ function init() {
     loader.loadManifest(manifest, true, "./assets/");
 	createScore()
 	createHeathBar()
+	generatePlatforms()
 }
 
 function handleComplete() {
 	makeSprites()
 
-	stage.addChild(knight, line, healthBar);
+	stage.addChild(knight, healthBar);
+
+	for (let i = 0; i < platformsArray.length; i++){
+		stage.addChild(platformsArray[i])
+	}
 
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	
@@ -62,15 +64,17 @@ function handleComplete() {
 
 
 function tick(event) {
+	if (!dead){
+		takeDamageOnCollision()
+		attack()
+		idle()
+		run()
+		jump()
+	}
 	stage.update(event);
 
-	attack()
-	idle()
-	run()
-	jump()
 	gravity()
-	drawPlatforms()
-	takeDamageOnCollision()
+
 
 }
 
@@ -164,20 +168,20 @@ function jump() {
 			.to({y: knight.y - 100}, 600, createjs.Ease.getPowInOut(2))
 			.call(fall)
 		
-		}
-	}
+		};
+	};
 	function fall() {
 		knight.gotoAndPlay("fall");
 		createjs.Tween.get(knight, {override: true})
-		.to({y: knight.y + 100}, 600, createjs.Ease.getPowIn(2))
+		.to({y: knight.y + 100}, 600)
 		.call(idleCheck)
-	}
+	};
 };
 
 function idleCheck() {
 	if (!falling){
 		knight.gotoAndPlay("idle");
-	}
+	};
 };
 
 
@@ -194,7 +198,7 @@ function attack() {
 				enemies.splice(collisionIndex, 1)
 			}
 		}
-	}
+	};
 };
 
 function takeDamageOnCollision() {
@@ -220,10 +224,13 @@ function takeDamageOnCollision() {
 			.to({ x: knight.x + moved}, 100);
 
 			knight.gotoAndPlay("damaged");
-		};
-		// if (totalHealth <= 0){
-		// 	knight.gotoAndPlay("dead")
-		// }
+		}
+		else if (totalHealth <= 0){
+			dead = true;
+			knight.y += 15
+			knight.gotoAndPlay("dying")
+			
+		}
 
 
 	};
@@ -371,7 +378,8 @@ function makeSprites() {
 		animations: {
 			// , next: "idle"
 			"attack": { "frames": [0, 1, 2, 3, 4, 5, 6, 7], next: "idle" },
-			"dead": { "frames": [8, 9, 10, 11, 12, 13, 14, 15] },
+			"dying": { "frames": [8, 9, 10, 11, 12, 13, 14, 15], next: "dead" },
+			"dead": { "frames": [15] },
 			"idle": { "frames": [16, 17, 18, 19] },
 			"jump": { "frames": [20, 21, 22, 23, 24, 25, 25, 25, 25, 25]},
 			"fall": { "frames": [25]},
@@ -414,57 +422,117 @@ function makeSprites() {
 };
 
 function gravity() {
-	if (knight.currentAnimation !== "jump"){
-		edgeCheck()
-	}
+
+	loopPlatforms()
+};
+
+function loopPlatforms() {
+	let i = 0
+	for (i = 0; i < platformsArray.length; i++){
+
+		coordinates = { 
+			lineTo : {x: platformsArray[i].graphics._instructions[2].x, y: platformsArray[i].graphics._instructions[1].y},
+			moveTo : {x: platformsArray[i].graphics._instructions[1].x, y: platformsArray[i].graphics._instructions[2].y},
+			id: i
+		}
+
+		if (edgeCheck(coordinates)){
+			if (platformCheck(coordinates)){
+				falling = true
+			}
 	
-};
+		}
+	}
 
-function edgeCheck() {
-	// console.log( knight.y + knightHeight, startY + lineThickness)
+	for (let j = 0; j < platformsArray.length; j++){
+		if (j ===i) {
+			continue
+		}
+		if (platformCheck(coordinates) ){
+			
+			falling = false
+			if (edgeCheck(coordinates)){
+				falling = true
+			}
+		}
+	}
+
+	if (falling){
+		// knight.y += 3
+		knight.gotoAndPlay("fall")
+		createjs.Tween.get(knight, {override: true})
+		.to({y: knight.y + 10}, 65)
+		.call(idleCheck)
+		
+
+	}
+}
+
+
+// Need rebuilding
+
+// Loop over all edges. return true only if knight is between the x min and x max and a small amount of height for the platform
+// then, in a different function, if this returned false, have knight fall  
+
+function edgeCheck(coordinates) {
+	let checkResults = false
+
 	if (facing === "left"){
-		
-		if (knight.x < startX + 30 || knight.y + knightHeight > startY + lineThickness ){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else if (knight.x > startX + lineWidth + 30 ){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else{
-			falling = false
+
+		// if beyond left edge or beyond line y
+		if (knight.x < coordinates.lineTo.x + 30 || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+			checkResults = true
 		}
 	}
-
-	if (facing === "right"){
-		
-		if (knight.x < startX - 30  || knight.y + knightHeight > startY + lineThickness ){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else if (knight.x > startX + lineWidth - 30){
-			falling = true
-			knight.y += 10
-			knight.gotoAndPlay("fall")
-		}
-		else{
-			falling = false
+	else if (facing === "right"){
+		if (knight.x > coordinates.moveTo.x - 30  || knight.y + knightHeight > coordinates.lineTo.y + lineThickness ){
+			checkResults = true
 		}
 	}
-};
+	// return false if no checks pass
+	return checkResults
+}
 
-function drawPlatforms() {
+function platformCheck(coordinates) {
+	let checkResults = false
+
+	if (knight.y + knightHeight - coordinates.moveTo.y > -10 && knight.y + knightHeight - coordinates.moveTo.y < 10)
+	{
+		checkResults = true
+	}
+
+	// returns false if not near top of platform
+	return 	checkResults
+}
+
+
+function generatePlatforms(){
+	var startX =  200
+	var startY = 465;
+	var lineWidth = 500;
+
+	let line = new createjs.Shape();
+
 	line.graphics.setStrokeStyle(lineThickness);
 	line.graphics.beginStroke(color);
 	line.graphics.moveTo(startX + lineWidth, startY);
 
 	line.graphics.lineTo(startX, startY);
 	line.graphics.endStroke();
-};
+	platformsArray.push(line)
+
+	// hard coded while debugging 
+	let line2 = new createjs.Shape();
+
+	line2.graphics.setStrokeStyle(lineThickness);
+	line2.graphics.beginStroke(color);
+	line2.graphics.moveTo(50 + lineWidth, 800);
+
+	line2.graphics.lineTo(50, 800);
+	line2.graphics.endStroke();
+	platformsArray.push(line2)
+}
+
 
 function createHeathBar() {
 	healthBar.graphics.beginFill('red');
